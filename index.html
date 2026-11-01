@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Playbook">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="format-detection" content="telephone=no">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=Amiri+Quran&display=swap">
 <style>
@@ -244,7 +247,7 @@ var DEF_STATIONS=[];
 var STOBJ={};
 var DEF_OBJ=[];
 
-var state=null, sel=null, filter=null, db=null, docRef=null, saveT=null, saving=Promise.resolve();
+var dirty=false, state=null, sel=null, filter=null, db=null, docRef=null, saveT=null, saving=Promise.resolve();
 var NOW=new Date();
 
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -289,9 +292,9 @@ function setSync(ok,txt){var el=document.getElementById("sync");el.className="sy
 function save(){
   try{localStorage.setItem("skyara",JSON.stringify(payload()))}catch(e){}
   if(!docRef)return;
-  clearTimeout(saveT);
+  dirty=true;clearTimeout(saveT);
   saveT=setTimeout(function(){
-    saving=saving.then(function(){return docRef.set(payload())}).then(function(){setSync(true,"Enregistré")}).catch(function(){setSync(false,"Enregistrement impossible, copie locale seulement")});
+    saving=saving.then(function(){return docRef.set(payload())}).then(function(){dirty=false;setSync(true,"Enregistré sur tous tes appareils")}).catch(function(){setSync(false,"Enregistrement impossible, copie locale seulement")});
   },600);
 }
 
@@ -804,7 +807,22 @@ setSync(false,"Copie locale uniquement");
     var snap=await docRef.get();
     if(snap.exists){state=mergeState(snap.data());var nx=nextSt();sel=nx?nx.id:null;renderFilters();renderStage();renderKpis();renderAxes();renderLinks();renderObjs();renderCard()}
     else{await docRef.set(payload())}
-    setSync(true,"Enregistré");
+    setSync(true,"Enregistré sur tous tes appareils");
+    var pend=null;
+    var applyRemote=function(d){
+      var ae=document.activeElement,ed=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
+      if(dirty||ed){pend=d;return}
+      pend=null;state=mergeState(d);
+      if(!state.stations.some(function(x){return x.id===sel}))sel=null;
+      renderFilters();renderStage();renderKpis();renderAxes();renderLinks();renderObjs();renderCard();
+    };
+    document.addEventListener("focusout",function(){setTimeout(function(){if(pend)applyRemote(pend)},300)});
+    docRef.onSnapshot(function(sn){
+      if(!sn.exists)return;
+      var d=sn.data();
+      if(JSON.stringify(mergeState(d))===JSON.stringify(payload()))return;
+      applyRemote(d);
+    },function(){});
   }catch(e){docRef=null;setSync(false,"Copie locale uniquement")}
 })();
 })();

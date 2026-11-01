@@ -17,3 +17,4 @@
 - 2026-11-01 : « إِنْ شَاءَ ٱللَّهُ » seul, en doré, grand, sous le titre (Amiri Quran). Badge vert retiré. `versions/skyara_v9_avant-dore-simple.html` : état précédent.
 - 2026-11-01 : « إِنْ شَاءَ ٱللَّهُ » doré réduit, placé à côté du titre SkyAra. `versions/skyara_v10_avant-petit-arabe.html` : état précédent.
 - 2026-11-01 : titre « SkyAra » remplacé par « Playbook » (même police). `versions/skyara_v12_avant-playbook.html` : état précédent.
+- 2026-11-01 : icône « إِنْ شَاءَ ٱللَّهُ » dorée sur vert (dossier `icons/`, manifeste), synchronisation entre appareils (`onSnapshot`).
